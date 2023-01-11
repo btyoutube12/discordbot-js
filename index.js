@@ -57,3 +57,29 @@ client.on('messageCreate', msg => {
     }
     
 });
+
+client.on('voiceStateUpdate', async (newState, oldState) => {
+    const channel = newState.guild.channels.cache.find(c => c.name === "자유음성채널생성");
+    if (newState.member.voice.channel) {
+        if (!channel) return
+        if (newState.member.voice.channel.id !== channel.id) return
+        newState.guild.channels.create(`${newState.member.user.username}의 음성방`, {
+            type: "GUILD_VOICE",
+            parent: oldState.channel.parent
+        }).then(ch => {
+            if (!ch) return
+            newState.member.voice.setChannel(ch)
+            const interval = setInterval(() => {
+                if (ch.deleted == true) {
+                    clearInterval(interval)
+                    return;
+                }
+                if (ch.members.size == 0) {
+                    ch.delete()
+                    console.log("채널 삭제됨")
+                    return;
+                }
+            }, 5000);
+        })
+    }
+})
